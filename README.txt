@@ -2,10 +2,16 @@
 Computer Security-HW3
 Seongbin Kim 22100113
 
+### Description
+TLS-based chat program secured using OpenSSL in C.
+Clients first connect to the server. Then, clients "chat" messages or files to other clients via the server.
+All messages (and files) are broadcasted to all clients from the server.
+To send a file, the command, `file_share:<filename>`, must be used.
+
 ### Prerequisites
 Versions tested on:
 1. OpenSSL: `1.1.1f`
-2. gcc: `Ubuntu 9.3.0-17ubuntu1~20.04) 9.3.0`
+2. gcc: `(Ubuntu 9.3.0-17ubuntu1~20.04) 9.3.0`
 
 ### Build
 ```
@@ -20,16 +26,20 @@ $ make certs
 ```
 
 ### Run
-1. Server
+1. Run server
 ```
 $ ./tls_server <port> <server_certificate_filename> <server_key_filename>
 $ ./tls_server 9000 server_cert.pem server_key.pem
 ```
 
-2. Client
+2. Run client
 ```
 $ ./tls_client <server_IP> <server_port> <client_name> <client_certificate_filename> <client_key_filename>
-$ /tls_client 172.17.0.1 9000 muadDib client_cert.pem client_key.pem
+$ ./tls_client 172.17.0.1 9000 muadDib client_cert.pem client_key.pem
+
+3. Start chat using client
+$ <text>
+$ file_share:<filename>
 ```
 
 ### Parameters
