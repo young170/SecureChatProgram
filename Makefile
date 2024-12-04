@@ -1,8 +1,8 @@
 CC = gcc
 CFLAGS = -Wall -Wextra
 
-SERVER_SRC = tls_chat_server.c
-CLIENT_SRC = tls_chat_client.c
+SERVER_SRC = tls_chat_serv.c
+CLIENT_SRC = tls_chat_clnt.c
 
 SERVER_BIN = tls_server
 CLIENT_BIN = tls_client
