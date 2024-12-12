@@ -22,13 +22,13 @@ SSL_CTX *init_ssl_context(const char *cert_file, const char *key_file) {
     SSL_CTX *ctx;
 
     // init openssl
-    SSL_library_init();
-    OpenSSL_add_all_algorithms();
-    SSL_load_error_strings();
+    SSL_library_init(); // SSL_library_init() registers the available SSL/TLS ciphers and digests.
+    OpenSSL_add_all_algorithms(); // OpenSSL_add_all_algorithms() adds all algorithms to the table (digests and ciphers).
+    SSL_load_error_strings(); // SSL_load_error_strings() registers the error strings for all libcrypto functions, and also registers the libssl error strings.
 
     // init ssl context
-    const SSL_METHOD *method = TLSv1_2_client_method();
-    ctx = SSL_CTX_new(method);
+    const SSL_METHOD *method = TLSv1_2_client_method(); // A TLS/SSL connection established with these methods will only understand the TLSv1.2 protocol.
+    ctx = SSL_CTX_new(method); // SSL_CTX_new() creates a new SSL_CTX object, which holds various configuration and data relevant to SSL/TLS or DTLS session establishment.
     if (!ctx) {
         perror("Unable to create SSL context");
         ERR_print_errors_fp(stderr);
@@ -36,18 +36,21 @@ SSL_CTX *init_ssl_context(const char *cert_file, const char *key_file) {
     }
 
 	// load certificates
+	// SSL_CTX_use_certificate_file() loads the certificates into the SSL_CTX.
 	if (SSL_CTX_use_certificate_file(ctx, cert_file, SSL_FILETYPE_PEM) != 1) {
 		ERR_print_errors_fp(stderr);
 		exit(EXIT_FAILURE);
 	}
 
 	// load private keys
+	// SSL_CTX_use_PrivateKey_file() loads the private keys into the SSL object.
 	if (SSL_CTX_use_PrivateKey_file(ctx, key_file, SSL_FILETYPE_PEM) != 1) {
 		ERR_print_errors_fp(stderr);
 		exit(EXIT_FAILURE);
 	}
 
 	// verify private key
+	// SSL_CTX_check_private_key() checks the consistency of a private key with the corresponding certificate loaded into ctx.
 	if (SSL_CTX_check_private_key(ctx) != 1) {
 		ERR_print_errors_fp(stderr);
 		exit(EXIT_FAILURE);
@@ -83,7 +86,7 @@ int main(int argc, char *argv[])
 	if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1)
 		error_handling("connect() error");
 	
-	// Wrap the socket with SSL
+	// SSL_new() create a new SSL structure for a connection
     ssl = SSL_new(ctx);
 	if (!ssl) {
 		ERR_print_errors_fp(stderr);
@@ -91,12 +94,14 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+	// SSL_set_fd() connect the SSL object with a file descriptor
     if (SSL_set_fd(ssl, sock) != 1) {
 		ERR_print_errors_fp(stderr);
 		close(sock);
 		exit(1);
 	}
 
+	// SSL_connect() initiates the TLS/SSL handshake with a server.
     if (SSL_connect(ssl) != 1) {
         ERR_print_errors_fp(stderr);
         exit(1);
@@ -107,9 +112,14 @@ int main(int argc, char *argv[])
 	pthread_join(snd_thread, &thread_return);
 	pthread_join(rcv_thread, &thread_return);
 	
+	// SSL_shutdown() shuts down an active TLS/SSL connection.
 	SSL_shutdown(ssl);
+	// SSL_free() decrements the reference count of ssl
+	// and removes the SSL structure pointed to by ssl and frees up the allocated memory if the reference count has reached 0.
     SSL_free(ssl);
     close(sock);
+	// SSL_CTX_free() decrements the reference count of ctx,
+	// and removes the SSL_CTX object pointed to by ctx and frees up the allocated memory if the reference count has reached 0.
     SSL_CTX_free(ctx);
 
 	return 0;
@@ -142,6 +152,7 @@ void *send_msg(void *arg)   // send thread main
             }
 
 			sprintf(name_msg, "FILE:%s", filename);
+			// SSL_write() write num bytes from the buffer buf into the specified ssl connection.
 			if (SSL_write(ssl, name_msg, strlen(name_msg)) <= 0) {
 				ERR_print_errors_fp(stderr);
 				exit(EXIT_FAILURE);
@@ -185,6 +196,7 @@ void *recv_msg(void * arg)   // read thread main
 
 	while (1)
 	{
+		// SSL_read() try to read num bytes from the specified ssl into the buffer buf.
 		str_len = SSL_read(ssl, name_msg, NAME_SIZE + BUF_SIZE - 1);
 		if (str_len <= -1) 
 			return (void *) -1;
